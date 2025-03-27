@@ -178,6 +178,15 @@
   }
   return pageFaults;
 }
+function highlightBestAlgorithm(fifoFaults, lruFaults, optimalFaults) {
+    let minFaults = Math.min(fifoFaults, lruFaults, optimalFaults);
+    return {
+        fifoHighlight: fifoFaults === minFaults ? 'class="highlight"' : '',
+        lruHighlight: lruFaults === minFaults ? 'class="highlight"' : '',
+        optimalHighlight: optimalFaults === minFaults ? 'class="highlight"' : ''
+    };
+}
+
 
 
     // Handle form submission
