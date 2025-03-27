@@ -99,6 +99,23 @@
 
 
   <script>
+    function displayResults(fifoFaults, lruFaults, optimalFaults) {
+    let highlights = highlightBestAlgorithm(fifoFaults, lruFaults, optimalFaults);
+
+    let output = `
+        <h2>📊 Page Replacement Simulation Results</h2>
+        <p><strong>Reference String:</strong> ${referenceString.join(", ")}</p>
+        <table>
+            <tr><th>Algorithm</th><th>Page Faults</th></tr>
+            <tr ${highlights.fifoHighlight}><td>FIFO</td><td>${fifoFaults}</td></tr>
+            <tr ${highlights.lruHighlight}><td>LRU</td><td>${lruFaults}</td></tr>
+            <tr ${highlights.optimalHighlight}><td>Optimal</td><td>${optimalFaults}</td></tr>
+        </table>
+    `;
+
+    document.getElementById('output').innerHTML = output;
+}
+
 
     // Function to simulate LRU page replacement
     function lruPageReplacement(referenceString, frames) {
