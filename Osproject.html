@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -53,6 +52,7 @@
       border-radius: 4px;
       cursor: pointer;
       font-size: 16px;
+      margin-top: 10px;
     }
 
     button:hover {
@@ -76,62 +76,66 @@
       margin: 8px 0;
     }
 
-    .output .algorithm {
-      margin-top: 20px;
-      padding: 10px;
-      background-color: #fff;
-      border-radius: 4px;
-      box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+    .highlight {
+      font-weight: bold;
+      color: green;
     }
   </style>
 </head>
 <body>
+
   <div class="container">
     <h1>Virtual Memory Management Tool</h1>
+    
+    <!-- Form Section -->
+    <form id="memoryForm">
+      <label for="memorySize">Memory Size (KB):</label>
+      <input type="number" id="memorySize" required>
+
+      <label for="pageSize">Page Size (KB):</label>
+      <input type="number" id="pageSize" required>
+
+      <label for="referenceString">Reference String (space-separated numbers):</label>
+      <input type="text" id="referenceString" required>
+
+      <button type="submit">Simulate</button>
+    </form>
+
     <button type="button" id="resetButton">Reset</button>
 
     <!-- Output Section -->
-    <div class="output" id="output">
-      <!-- Results will be displayed here -->
-    </div>
+    <div class="output" id="output"></div>
   </div>
-  <button type="button" id="resetButton" class="reset-btn">Reset</button>
-
 
   <script>
-    // Store input values when submitting
-document.getElementById('memoryForm').addEventListener('submit', function (e) {
-    localStorage.setItem('memorySize', document.getElementById('memorySize').value);
-    localStorage.setItem('pageSize', document.getElementById('pageSize').value);
-    localStorage.setItem('referenceString', document.getElementById('referenceString').value);
-});
-
-// Load stored values when the page loads
-window.onload = function () {
-    if (localStorage.getItem('memorySize')) {
+    // Load stored values when the page loads
+    window.onload = function () {
+      if (localStorage.getItem('memorySize')) {
         document.getElementById('memorySize').value = localStorage.getItem('memorySize');
         document.getElementById('pageSize').value = localStorage.getItem('pageSize');
         document.getElementById('referenceString').value = localStorage.getItem('referenceString');
+      }
+    };
+
+    // Function to simulate FIFO page replacement
+    function fifoPageReplacement(referenceString, frames) {
+      let queue = [];
+      let pageTable = new Set();
+      let pageFaults = 0;
+
+      for (let page of referenceString) {
+        if (!pageTable.has(page)) {
+          pageFaults++;
+          if (queue.length === frames) {
+            let removedPage = queue.shift();
+            pageTable.delete(removedPage);
+          }
+          queue.push(page);
+          pageTable.add(page);
+        }
+      }
+      return pageFaults;
     }
-};
-
-    function displayResults(fifoFaults, lruFaults, optimalFaults) {
-    let highlights = highlightBestAlgorithm(fifoFaults, lruFaults, optimalFaults);
-
-    let output = `
-        <h2>📊 Page Replacement Simulation Results</h2>
-        <p><strong>Reference String:</strong> ${referenceString.join(", ")}</p>
-        <table>
-            <tr><th>Algorithm</th><th>Page Faults</th></tr>
-            <tr ${highlights.fifoHighlight}><td>FIFO</td><td>${fifoFaults}</td></tr>
-            <tr ${highlights.lruHighlight}><td>LRU</td><td>${lruFaults}</td></tr>
-            <tr ${highlights.optimalHighlight}><td>Optimal</td><td>${optimalFaults}</td></tr>
-        </table>
-    `;
-
-    document.getElementById('output').innerHTML = output;
-}
-
 
     // Function to simulate LRU page replacement
     function lruPageReplacement(referenceString, frames) {
@@ -190,118 +194,59 @@ window.onload = function () {
     function simulateFragmentation(memorySize, pageSize) {
       let totalPages = Math.floor(memorySize / pageSize);
       let internalFragmentation = pageSize - (memorySize % pageSize);
-      return {
-        totalPages,
-        internalFragmentation,
-      };
+      return { totalPages, internalFragmentation };
     }
-    function fifoPageReplacement(referenceString, frames) {
-  let queue = [];
-  let pageTable = new Set();
-  let pageFaults = 0;
-
-  for (let page of referenceString) {
-    if (!pageTable.has(page)) {
-      pageFaults++;
-      if (queue.length === frames) {
-        let removedPage = queue.shift();
-        pageTable.delete(removedPage);
-      }
-      queue.push(page);
-      pageTable.add(page);
-    }
-  }
-  return pageFaults;
-}
-function highlightBestAlgorithm(fifoFaults, lruFaults, optimalFaults) {
-    let minFaults = Math.min(fifoFaults, lruFaults, optimalFaults);
-    return {
-        fifoHighlight: fifoFaults === minFaults ? 'class="highlight"' : '',
-        lruHighlight: lruFaults === minFaults ? 'class="highlight"' : '',
-        optimalHighlight: optimalFaults === minFaults ? 'class="highlight"' : ''
-    };
-}
-
-
 
     // Handle form submission
     document.getElementById('memoryForm').addEventListener('submit', function (e) {
-  e.preventDefault();
+      e.preventDefault();
 
-  // Get user inputs
-  let memorySize = parseInt(document.getElementById('memorySize').value);
-  let pageSize = parseInt(document.getElementById('pageSize').value);
-  let referenceStringInput = document.getElementById('referenceString').value.trim();
+      let memorySize = parseInt(document.getElementById('memorySize').value);
+      let pageSize = parseInt(document.getElementById('pageSize').value);
+      let referenceStringInput = document.getElementById('referenceString').value.trim();
 
-  // Validation: Ensure positive numbers and non-empty reference string
-  if (isNaN(memorySize) || memorySize <= 0 || isNaN(pageSize) || pageSize <= 0 || !referenceStringInput) {
-    alert("Please enter valid positive values.");
-    return;
-  }
+      // Validate input
+      if (isNaN(memorySize) || memorySize <= 0 || isNaN(pageSize) || pageSize <= 0 || !referenceStringInput) {
+        alert("Please enter valid positive values.");
+        return;
+      }
 
-  let referenceString = referenceStringInput.split(' ').map(Number);
-  if (referenceString.some(isNaN)) {
-    alert("Reference string must contain valid numbers.");
-    return;
-  }
+      let referenceString = referenceStringInput.split(' ').map(Number);
+      if (referenceString.some(isNaN)) {
+        alert("Reference string must contain valid numbers.");
+        return;
+      }
 
-  // Calculate frames
-  let frames = Math.floor(memorySize / pageSize);
+      // Store values in localStorage
+      localStorage.setItem('memorySize', memorySize);
+      localStorage.setItem('pageSize', pageSize);
+      localStorage.setItem('referenceString', referenceStringInput);
 
-  // Simulate fragmentation
-  let fragmentation = simulateFragmentation(memorySize, pageSize);
+      let frames = Math.floor(memorySize / pageSize);
+      let fragmentation = simulateFragmentation(memorySize, pageSize);
+      let fifoFaults = fifoPageReplacement(referenceString, frames);
+      let lruFaults = lruPageReplacement(referenceString, frames);
+      let optimalFaults = optimalPageReplacement(referenceString, frames);
 
-  // Simulate page replacement algorithms
-  let lruFaults = lruPageReplacement(referenceString, frames);
-  let optimalFaults = optimalPageReplacement(referenceString, frames);
-  let fifoFaults = fifoPageReplacement(referenceString, frames);
+      let output = `
+        <h2>Simulation Summary</h2>
+        <p><strong>Total Pages:</strong> ${fragmentation.totalPages}</p>
+        <p><strong>Internal Fragmentation:</strong> ${fragmentation.internalFragmentation} KB</p>
+        <p><strong>FIFO Faults:</strong> ${fifoFaults}</p>
+        <p><strong>LRU Faults:</strong> ${lruFaults}</p>
+        <p><strong>Optimal Faults:</strong> ${optimalFaults}</p>
+      `;
 
-  // Determine algorithm with least page faults
-  let minFaults = Math.min(lruFaults, optimalFaults, fifoFaults);
-  let highlight = (faults) => faults === minFaults ? 'style="color:green; font-weight:bold;"' : '';
+      document.getElementById('output').innerHTML = output;
+    });
 
-  // Display results
-  let output = `
-    <h2>Simulation Summary</h2>
-    <p><strong>Reference String:</strong> ${referenceString.join(', ')}</p>
-    <p><strong>Total Pages:</strong> ${fragmentation.totalPages}</p>
-    <p><strong>Page Size:</strong> ${pageSize} KB</p>
-    <p><strong>Memory Size:</strong> ${memorySize} KB</p>
-    <p><strong>Internal Fragmentation:</strong> ${fragmentation.internalFragmentation} KB</p>
-
-    <h3>Page Replacement Comparisons</h3>
-    <table border="1" cellpadding="5" cellspacing="0">
-      <tr>
-        <th>Algorithm</th>
-        <th>Page Faults</th>
-      </tr>
-      <tr ${highlight(lruFaults)}>
-        <td>LRU Page Replacement</td>
-        <td>${lruFaults}</td>
-      </tr>
-      <tr ${highlight(optimalFaults)}>
-        <td>Optimal Page Replacement</td>
-        <td>${optimalFaults}</td>
-      </tr>
-      <tr ${highlight(fifoFaults)}>
-        <td>FIFO Page Replacement</td>
-        <td>${fifoFaults}</td>
-      </tr>
-    </table>
-
-    <p><strong>Total Page Faults (All Algorithms Combined):</strong> ${lruFaults + optimalFaults + fifoFaults}</p>
-  `;
-
-  document.getElementById('output').innerHTML = output;
-  document.getElementById('resetButton').addEventListener('click', function () {
-    document.getElementById('memoryForm').reset();
-    document.getElementById('output').innerHTML = "";
-    localStorage.clear(); // Clear stored input data
-});
-
-});
-
-  
+    // Reset Button
+    document.getElementById('resetButton').addEventListener('click', function () {
+      document.getElementById('memoryForm').reset();
+      document.getElementById('output').innerHTML = "";
+      localStorage.clear();
+    });
   </script>
+
 </body>
 </html>
