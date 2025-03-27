@@ -99,6 +99,22 @@
 
 
   <script>
+    // Store input values when submitting
+document.getElementById('memoryForm').addEventListener('submit', function (e) {
+    localStorage.setItem('memorySize', document.getElementById('memorySize').value);
+    localStorage.setItem('pageSize', document.getElementById('pageSize').value);
+    localStorage.setItem('referenceString', document.getElementById('referenceString').value);
+});
+
+// Load stored values when the page loads
+window.onload = function () {
+    if (localStorage.getItem('memorySize')) {
+        document.getElementById('memorySize').value = localStorage.getItem('memorySize');
+        document.getElementById('pageSize').value = localStorage.getItem('pageSize');
+        document.getElementById('referenceString').value = localStorage.getItem('referenceString');
+    }
+};
+
     function displayResults(fifoFaults, lruFaults, optimalFaults) {
     let highlights = highlightBestAlgorithm(fifoFaults, lruFaults, optimalFaults);
 
