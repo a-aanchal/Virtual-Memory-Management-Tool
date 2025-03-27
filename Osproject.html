@@ -112,6 +112,7 @@
   </div>
 
   <script>
+
     // Function to simulate LRU page replacement
     function lruPageReplacement(referenceString, frames) {
       let pageTable = new Map();
@@ -196,42 +197,75 @@
 
     // Handle form submission
     document.getElementById('memoryForm').addEventListener('submit', function (e) {
-      e.preventDefault();
+  e.preventDefault();
 
-      // Get user inputs
-      let memorySize = parseInt(document.getElementById('memorySize').value);
-      let pageSize = parseInt(document.getElementById('pageSize').value);
-      let referenceString = document.getElementById('referenceString').value.split(' ').map(Number);
+  // Get user inputs
+  let memorySize = parseInt(document.getElementById('memorySize').value);
+  let pageSize = parseInt(document.getElementById('pageSize').value);
+  let referenceStringInput = document.getElementById('referenceString').value.trim();
 
-      // Calculate frames
-      let frames = Math.floor(memorySize / pageSize);
+  // Validation: Ensure positive numbers and non-empty reference string
+  if (isNaN(memorySize) || memorySize <= 0 || isNaN(pageSize) || pageSize <= 0 || !referenceStringInput) {
+    alert("Please enter valid positive values.");
+    return;
+  }
 
-      // Simulate fragmentation
-      let fragmentation = simulateFragmentation(memorySize, pageSize);
+  let referenceString = referenceStringInput.split(' ').map(Number);
+  if (referenceString.some(isNaN)) {
+    alert("Reference string must contain valid numbers.");
+    return;
+  }
 
-      // Simulate LRU and Optimal algorithms
-      let lruFaults = lruPageReplacement(referenceString, frames);
-      let optimalFaults = optimalPageReplacement(referenceString, frames);
+  // Calculate frames
+  let frames = Math.floor(memorySize / pageSize);
 
-      // Display results
-      let output = `
-        <h2>Simulation Results</h2>
-        <p><strong>Total Pages:</strong> ${fragmentation.totalPages}</p>
-        <p><strong>Page Size:</strong> ${pageSize} KB</p>
-        <p><strong>Memory Size:</strong> ${memorySize} KB</p>
-        <p><strong>Internal Fragmentation:</strong> ${fragmentation.internalFragmentation} KB</p>
+  // Simulate fragmentation
+  let fragmentation = simulateFragmentation(memorySize, pageSize);
 
-        <div class="algorithm">
-          <h3>LRU Page Replacement</h3>
-          <p><strong>Page Faults:</strong> ${lruFaults}</p>
-        </div>
+  // Simulate page replacement algorithms
+  let lruFaults = lruPageReplacement(referenceString, frames);
+  let optimalFaults = optimalPageReplacement(referenceString, frames);
+  let fifoFaults = fifoPageReplacement(referenceString, frames);
 
-        <div class="algorithm">
-          <h3>Optimal Page Replacement</h3>
-          <p><strong>Page Faults:</strong> ${optimalFaults}</p>
-        </div>
-      `;
-      document.getElementById('output').innerHTML = output;
+  // Determine algorithm with least page faults
+  let minFaults = Math.min(lruFaults, optimalFaults, fifoFaults);
+  let highlight = (faults) => faults === minFaults ? 'style="color:green; font-weight:bold;"' : '';
+
+  // Display results
+  let output = `
+    <h2>Simulation Summary</h2>
+    <p><strong>Reference String:</strong> ${referenceString.join(', ')}</p>
+    <p><strong>Total Pages:</strong> ${fragmentation.totalPages}</p>
+    <p><strong>Page Size:</strong> ${pageSize} KB</p>
+    <p><strong>Memory Size:</strong> ${memorySize} KB</p>
+    <p><strong>Internal Fragmentation:</strong> ${fragmentation.internalFragmentation} KB</p>
+
+    <h3>Page Replacement Comparisons</h3>
+    <table border="1" cellpadding="5" cellspacing="0">
+      <tr>
+        <th>Algorithm</th>
+        <th>Page Faults</th>
+      </tr>
+      <tr ${highlight(lruFaults)}>
+        <td>LRU Page Replacement</td>
+        <td>${lruFaults}</td>
+      </tr>
+      <tr ${highlight(optimalFaults)}>
+        <td>Optimal Page Replacement</td>
+        <td>${optimalFaults}</td>
+      </tr>
+      <tr ${highlight(fifoFaults)}>
+        <td>FIFO Page Replacement</td>
+        <td>${fifoFaults}</td>
+      </tr>
+    </table>
+
+    <p><strong>Total Page Faults (All Algorithms Combined):</strong> ${lruFaults + optimalFaults + fifoFaults}</p>
+  `;
+
+  document.getElementById('output').innerHTML = output;
+});
+
     });
   </script>
 </body>
