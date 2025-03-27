@@ -95,6 +95,8 @@
       <!-- Results will be displayed here -->
     </div>
   </div>
+  <button type="button" id="resetButton" class="reset-btn">Reset</button>
+
 
   <script>
 
@@ -258,6 +260,12 @@ function highlightBestAlgorithm(fifoFaults, lruFaults, optimalFaults) {
   `;
 
   document.getElementById('output').innerHTML = output;
+  document.getElementById('resetButton').addEventListener('click', function () {
+    document.getElementById('memoryForm').reset();
+    document.getElementById('output').innerHTML = "";
+    localStorage.clear(); // Clear stored input data
+});
+
 });
 
   
