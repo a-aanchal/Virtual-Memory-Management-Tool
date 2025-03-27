@@ -1,0 +1,219 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Virtual Memory Management Tool</title>
+  <style>
+    /* General Styling */
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f4f9;
+      margin: 0;
+      padding: 20px;
+      color: #333;
+    }
+
+    h1 {
+      text-align: center;
+      color: #007bff;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      background: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+
+    /* Form Styling */
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: bold;
+    }
+
+    input[type="number"],
+    input[type="text"] {
+      width: 100%;
+      padding: 8px;
+      margin-bottom: 16px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+
+    button {
+      padding: 10px 20px;
+      background-color: #007bff;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+
+    button:hover {
+      background-color: #0056b3;
+    }
+
+    /* Output Styling */
+    .output {
+      margin-top: 20px;
+      padding: 20px;
+      background-color: #e9ecef;
+      border-radius: 4px;
+    }
+
+    .output h2 {
+      margin-top: 0;
+      color: #007bff;
+    }
+
+    .output p {
+      margin: 8px 0;
+    }
+
+    .output .algorithm {
+      margin-top: 20px;
+      padding: 10px;
+      background-color: #fff;
+      border-radius: 4px;
+      box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Virtual Memory Management Tool</h1>
+    <form id="memoryForm">
+      <!-- Memory Size Input -->
+      <label for="memorySize">Total Memory Size (KB):</label>
+      <input type="number" id="memorySize" required>
+
+      <!-- Page Size Input -->
+      <label for="pageSize">Page Size (KB):</label>
+      <input type="number" id="pageSize" required>
+
+      <!-- Reference String Input -->
+      <label for="referenceString">Reference String (e.g., 1 2 3 4):</label>
+      <input type="text" id="referenceString" required>
+
+      <!-- Submit Button -->
+      <button type="submit">Simulate</button>
+    </form>
+
+    <!-- Output Section -->
+    <div class="output" id="output">
+      <!-- Results will be displayed here -->
+    </div>
+  </div>
+
+  <script>
+    // Function to simulate LRU page replacement
+    function lruPageReplacement(referenceString, frames) {
+      let pageTable = new Map();
+      let frameList = [];
+      let pageFaults = 0;
+
+      for (let page of referenceString) {
+        if (!pageTable.has(page)) {
+          pageFaults++;
+          if (frameList.length === frames) {
+            let removedPage = frameList.shift();
+            pageTable.delete(removedPage);
+          }
+          frameList.push(page);
+          pageTable.set(page, true);
+        } else {
+          frameList.splice(frameList.indexOf(page), 1);
+          frameList.push(page);
+        }
+      }
+      return pageFaults;
+    }
+
+    // Function to simulate Optimal page replacement
+    function optimalPageReplacement(referenceString, frames) {
+      let pageTable = new Map();
+      let pageFaults = 0;
+
+      for (let i = 0; i < referenceString.length; i++) {
+        let page = referenceString[i];
+        if (!pageTable.has(page)) {
+          pageFaults++;
+          if (pageTable.size === frames) {
+            let farthest = -1;
+            let pageToRemove = -1;
+            for (let p of pageTable.keys()) {
+              let idx = referenceString.slice(i).indexOf(p);
+              if (idx === -1) {
+                pageToRemove = p;
+                break;
+              } else if (idx > farthest) {
+                farthest = idx;
+                pageToRemove = p;
+              }
+            }
+            pageTable.delete(pageToRemove);
+          }
+          pageTable.set(page, true);
+        }
+      }
+      return pageFaults;
+    }
+
+    // Function to simulate fragmentation
+    function simulateFragmentation(memorySize, pageSize) {
+      let totalPages = Math.floor(memorySize / pageSize);
+      let internalFragmentation = pageSize - (memorySize % pageSize);
+      return {
+        totalPages,
+        internalFragmentation,
+      };
+    }
+
+    // Handle form submission
+    document.getElementById('memoryForm').addEventListener('submit', function (e) {
+      e.preventDefault();
+
+      // Get user inputs
+      let memorySize = parseInt(document.getElementById('memorySize').value);
+      let pageSize = parseInt(document.getElementById('pageSize').value);
+      let referenceString = document.getElementById('referenceString').value.split(' ').map(Number);
+
+      // Calculate frames
+      let frames = Math.floor(memorySize / pageSize);
+
+      // Simulate fragmentation
+      let fragmentation = simulateFragmentation(memorySize, pageSize);
+
+      // Simulate LRU and Optimal algorithms
+      let lruFaults = lruPageReplacement(referenceString, frames);
+      let optimalFaults = optimalPageReplacement(referenceString, frames);
+
+      // Display results
+      let output = `
+        <h2>Simulation Results</h2>
+        <p><strong>Total Pages:</strong> ${fragmentation.totalPages}</p>
+        <p><strong>Page Size:</strong> ${pageSize} KB</p>
+        <p><strong>Memory Size:</strong> ${memorySize} KB</p>
+        <p><strong>Internal Fragmentation:</strong> ${fragmentation.internalFragmentation} KB</p>
+
+        <div class="algorithm">
+          <h3>LRU Page Replacement</h3>
+          <p><strong>Page Faults:</strong> ${lruFaults}</p>
+        </div>
+
+        <div class="algorithm">
+          <h3>Optimal Page Replacement</h3>
+          <p><strong>Page Faults:</strong> ${optimalFaults}</p>
+        </div>
+      `;
+      document.getElementById('output').innerHTML = output;
+    });
+  </script>
+</body>
+</html>
